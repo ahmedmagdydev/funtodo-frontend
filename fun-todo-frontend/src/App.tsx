@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Register } from './components/Register';
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
+import { LandingPage } from './components/landing';
 import PrivateRoute from "./components/PrivateRoute";
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 
@@ -28,7 +29,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/" element={<LandingPage  onGetStarted={() => {}} />} />
       </Routes>
     </ThemeProvider>
   )

@@ -2,7 +2,7 @@ import axios from "axios";
 import { RegisterFormData, ApiResponse } from "../types/auth";
 // import { hashPassword, generateSalt } from "../utils/crypto";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 const storeToken = (token: string, rememberMe: boolean = false) => {
   if (rememberMe) {
@@ -95,17 +95,24 @@ export const authService = {
   },
 
   async googleSignIn(
-    accessToken: string,
+    req: any,
     rememberMe: boolean = false
   ): Promise<ApiResponse> {
+    console.log("🚀 ~ req:", req);
     try {
       const response = await axios.post(`${API_URL}/auth/google`, {
-        access_token: accessToken,
+        access_token: req,
       });
 
       // Store the token based on remember me preference
-      if (response.data.data.token) {
-        storeToken(response.data.data.token, rememberMe);
+      if (response.data.access_token) {
+        storeToken(response.data.access_token, rememberMe);
+        const userInfo = await axios
+          .get("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${response.data.access_token}` },
+          })
+          .then((res) => res.data);
+        console.log(userInfo);
       }
 
       return {

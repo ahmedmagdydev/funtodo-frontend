@@ -60,9 +60,9 @@ export const Register: React.FC = () => {
   });
 
   const googleLogin = useGoogleLogin({
-    onSuccess: async (response) => {
+    onSuccess: async ({code}) => {
       try {
-        const result = await authService.googleSignIn(response.access_token);
+        const result = await authService.googleSignIn(code);
         if (result.success) {
           setSubmitStatus({
             type: 'success',
@@ -82,6 +82,7 @@ export const Register: React.FC = () => {
         });
       }
     },
+    flow: 'auth-code',
     onError: () => {
       setSubmitStatus({
         type: 'error',

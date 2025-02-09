@@ -23,6 +23,7 @@ import { GaugeChart } from "./charts/GaugeChart";
 import { dashboardStyles } from "../styles/dashboard.styles";
 import { SensorData, GroupBy } from "../types/dashboard";
 import { useMqttSubscription } from "../hooks/useMqttSubscription";
+import  WebSocketTest  from "./WebSocketTest";
 
 export const Dashboard: React.FC = () => {
   const [groupBy, setGroupBy] = useState<GroupBy>("type");
@@ -212,6 +213,7 @@ export const Dashboard: React.FC = () => {
       height: '100vh',
       overflow: 'hidden', // Prevent double scrollbars
     }}>
+      <WebSocketTest />
       {/* Header */}
       <Box sx={dashboardStyles.header}>
         <Typography variant="h5">Sensor Dashboard</Typography>
