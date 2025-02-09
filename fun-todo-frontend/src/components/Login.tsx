@@ -57,7 +57,7 @@ export const Login: React.FC = () => {
             message: 'Login successful!',
           });
           // Redirect to dashboard or home page after successful login
-          setTimeout(() => navigate('/'), 1500);
+          setTimeout(() => navigate('/dashboard'), 500);
         } else {
           setSubmitStatus({
             type: 'error',
@@ -83,7 +83,7 @@ export const Login: React.FC = () => {
             type: 'success',
             message: 'Google sign-in successful!',
           });
-          setTimeout(() => navigate('/'), 1500);
+          setTimeout(() => navigate('/dashboard'), 500);
         } else {
           setSubmitStatus({
             type: 'error',
