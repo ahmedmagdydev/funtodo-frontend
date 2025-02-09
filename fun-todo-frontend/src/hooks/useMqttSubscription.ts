@@ -10,12 +10,12 @@ const SENSOR_CLIENTS = [
   "client5",
   "client6",
 ];
-const SENSOR_TYPES = ["temperature", "humidity", "pressure"];
+// const SENSOR_TYPES = ["temperature", "humidity", "pressure"];
 
 // Helper function to generate a concrete topic from a pattern
 const generateConcreteTopics = (topicPattern: string): string[] => {
   if (topicPattern.includes("+")) {
-    const [prefix, wildcard, type] = topicPattern.split("/");
+    const [prefix, type] = topicPattern.split("/");
     if (type === "temperature" || type === "humidity" || type === "pressure") {
       return SENSOR_CLIENTS.map((clientId) => `${prefix}/${clientId}/${type}`);
     }
@@ -27,7 +27,7 @@ const generateConcreteTopics = (topicPattern: string): string[] => {
 // Simulated MQTT subscription hook for development
 export const useMqttSubscription = (topicPatterns: string[]) => {
   const [data, setData] = useState<MqttMessage | null>(null);
-  const [error, setError] = useState<Error | null>(null);
+  // const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     console.log(
@@ -82,5 +82,5 @@ export const useMqttSubscription = (topicPatterns: string[]) => {
     };
   }, [topicPatterns.join(",")]); // Only recreate when topics change
 
-  return { data, error };
+  return { data };
 };
