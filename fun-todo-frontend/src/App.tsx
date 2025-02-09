@@ -1,8 +1,8 @@
-
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
 import { Register } from './components/Register';
 import { Login } from './components/Login';
+import { VerifyEmail } from './components/VerifyEmail';
 import { Dashboard } from './components/Dashboard';
 import { LandingPage } from './components/landing';
 import PrivateRoute from "./components/PrivateRoute";
@@ -28,6 +28,7 @@ function App() {
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/" element={<LandingPage   />} />
       </Routes>

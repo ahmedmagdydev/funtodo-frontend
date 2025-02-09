@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -36,10 +36,23 @@ const loginValidationSchema = Yup.object().shape({
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const verificationSuccess = location.state?.verificationSuccess;
+  const verificationMessage = location.state?.message;
+
   const [submitStatus, setSubmitStatus] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
+
+  useEffect(() => {
+    if (verificationSuccess) {
+      setSubmitStatus({
+        type: 'success',
+        message: verificationMessage || 'Email verified successfully!'
+      });
+    }
+  }, [verificationSuccess, verificationMessage]);
 
   const formik = useFormik<LoginFormData>({
     initialValues: {
