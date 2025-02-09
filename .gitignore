@@ -63,3 +63,5 @@ bower_components/
 scratchpad.md
 *.env
 client_secret_628245139741-pmiavkg8chagd9mf7pmsbu7coiuq69qr.apps.googleusercontent.com.json
+package-lock.json
+yarn-lock
