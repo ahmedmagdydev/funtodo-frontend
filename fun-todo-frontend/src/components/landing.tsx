@@ -1,11 +1,11 @@
-import { Box, Button, Container, Grid, Paper, Typography, useTheme } from "@mui/material";
+import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import { ArrowRight, Wifi, Shield, BarChart ,Upload} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export const LandingPage = () => {
-  const theme = useTheme();
+  // const theme = useTheme();
   const navigate = useNavigate();
 
   return (
