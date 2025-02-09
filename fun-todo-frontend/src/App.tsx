@@ -29,7 +29,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/" element={<LandingPage  onGetStarted={() => {}} />} />
+        <Route path="/" element={<LandingPage   />} />
       </Routes>
     </ThemeProvider>
   )
