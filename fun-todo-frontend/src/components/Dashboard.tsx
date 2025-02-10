@@ -1,268 +1,175 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
-  Card,
+  Paper,
   Typography,
-  FormControl,
-  Select,
-  MenuItem,
-  IconButton,
-  Tooltip,
-
-  SelectChangeEvent,
-  ToggleButtonGroup,
-  ToggleButton,
+  Grid,
 } from "@mui/material";
-import {
-  ViewModule as ViewModuleIcon,
-  ViewList as ViewListIcon,
-  RestartAlt as RestartAltIcon
-} from "@mui/icons-material";
-import { GridLayout } from "./GridLayout";
-import { GaugeChart } from "./charts/GaugeChart";
-import { dashboardStyles } from "../styles/dashboard.styles";
-import { SensorData, GroupBy } from "../types/dashboard";
-import { useMqttSubscription } from "../hooks/useMqttSubscription";
-import  WebSocketTest  from "./WebSocketTest";
+import GridLayout from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
+
+import WebSocketService from '../services/webSocket';
+import { ClientData } from "../types/dashboard";
+
+const SENSOR_COLORS = {
+  temperature: "#ff9800",
+  humidity: "#2196f3",
+  pressure: "#4caf50",
+};
 
 export const Dashboard: React.FC = () => {
-  const [groupBy, setGroupBy] = useState<GroupBy>("type");
-  const [layout, setLayout] = useState<"grid" | "list">("grid");
-  const [sensorData, setSensorData] = useState<SensorData[]>([]);
-  const [layouts, setLayouts] = useState({});
+  const [clientSensors, setClientSensors] = useState<ClientData[]>([]);
+  const [containerWidths, setContainerWidths] = useState<{ [key: string]: number }>({});
+  const containerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const resizeObserver = useRef<ResizeObserver | null>(null);
 
-  // Subscribe to MQTT topics
-  const { data: mqttData } = useMqttSubscription([
-    "sensors/+/temperature",
-    "sensors/+/humidity",
-    "sensors/+/pressure",
-  ]);
-
-  // Update sensor data when new MQTT messages arrive
   useEffect(() => {
-    if (mqttData) {
-      setSensorData((prev) => {
-        const newData = [...prev];
-        const timestamp = new Date().getTime();
-        
-        // Update or add new sensor data
-        const index = newData.findIndex(
-          (d) => d.clientId === mqttData.clientId && d.type === mqttData.type
-        );
-        
-        if (index !== -1) {
-          newData[index].values.push({ timestamp, value: mqttData.value });
-          // Keep only last 100 values
-          if (newData[index].values.length > 100) {
-            newData[index].values.shift();
-          }
-        } else {
-          newData.push({
-            clientId: mqttData.clientId,
-            type: mqttData.type,
-            values: [{ timestamp, value: mqttData.value }],
-          });
+    const webSocketService = WebSocketService.getInstance();
+    
+    const unsubscribe = webSocketService.subscribe((data) => {
+      setClientSensors(data);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Initialize ResizeObserver
+    resizeObserver.current = new ResizeObserver((entries) => {
+      const newWidths: { [key: string]: number } = {};
+      entries.forEach((entry) => {
+        const clientId = entry.target.getAttribute('data-client-id');
+        if (clientId) {
+          newWidths[clientId] = entry.contentRect.width;
         }
-        
-        return newData;
+      });
+      setContainerWidths((prev) => ({ ...prev, ...newWidths }));
+    });
+
+    // Cleanup observer
+    return () => {
+      if (resizeObserver.current) {
+        resizeObserver.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Update observers when clients change
+  useEffect(() => {
+    if (resizeObserver.current) {
+      // Disconnect all current observations
+      resizeObserver.current.disconnect();
+      
+      // Observe all container refs
+      Object.entries(containerRefs.current).forEach(([clientId, element]) => {
+        if (element) {
+          resizeObserver.current?.observe(element);
+        }
       });
     }
-  }, [mqttData]);
+  }, [clientSensors]);
 
-  const handleGroupByChange = (event: SelectChangeEvent<GroupBy>) => {
-    setGroupBy(event.target.value as GroupBy);
-  };
-
-  const handleLayoutChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newLayout: "grid" | "list"
-  ) => {
-    if (newLayout !== null) {
-      setLayout(newLayout);
-    }
-  };
-
-  // Load saved layouts from localStorage on mount
-  useEffect(() => {
-    const savedLayouts = localStorage.getItem("dashboardLayouts");
-    if (savedLayouts) {
-      try {
-        setLayouts(JSON.parse(savedLayouts));
-      } catch (e) {
-        console.error("Error loading saved layouts:", e);
-      }
-    }
-  }, []);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleLayoutSave = (key: string, newLayout: any) => {
-    const updatedLayouts = {
-      ...layouts,
-      [key]: newLayout,
-    };
-    console.log("🚀 ~ handleLayoutSave ~ updatedLayouts:", updatedLayouts)
-    setLayouts(updatedLayouts);
-    localStorage.setItem("dashboardLayouts", JSON.stringify(updatedLayouts));
-  };
-
-
-  // Group sensors based on selected grouping
-  const groupedSensors = React.useMemo(() => {
-    const groups: { [key: string]: SensorData[] } = {};
-    
-    sensorData.forEach((sensor) => {
-      const key = groupBy === "type" ? sensor.type : sensor.clientId;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(sensor);
-    });
-    
-    return groups;
-  }, [sensorData, groupBy]);
-
-  // Get sensor ranges based on type
-  const getSensorRanges = (type: string): { min: number; max: number } => {
-    switch (type) {
-      case "temperature":
-        return { min: 0, max: 50 }; // Temperature in Celsius
-      case "humidity":
-        return { min: 0, max: 100 }; // Humidity in percentage
-      case "pressure":
-        return { min: 900, max: 1100 }; // Pressure in hPa
-      default:
-        return { min: 0, max: 100 };
-    }
-  };
-
-  // Render chart based on sensor type and data
-  const renderChart = (sensor: SensorData) => {
-    const { min, max } = getSensorRanges(sensor.type);
-    const currentValue = sensor.values[sensor.values.length - 1]?.value ?? 0;
-
+  const renderSensorBox = (sensorId: string, value: number) => {
     return (
-      <Card 
-        sx={{ 
-          p: 3, 
-          height: '100%',
-          minHeight: '360px',
-          display: 'flex',
-          flexDirection: 'column',
+      <Paper
+        sx={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          bgcolor: (SENSOR_COLORS as any)[sensorId] || "#757575",
+          color: "white",
+          borderRadius: 2,
         }}
       >
-        <Typography 
-          variant="h6" 
-          gutterBottom 
-          sx={{ 
-            textAlign: 'center',
-            mb: 2,
-          }}
-        >
-          {sensor.type.charAt(0).toUpperCase() + sensor.type.slice(1)}
-          {groupBy === "type" && ` - ${sensor.clientId}`}
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          {sensorId}
         </Typography>
-        <Box sx={{ 
-          flex: 1,
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-        }}>
-          <GaugeChart
-            value={currentValue}
-            min={min}
-            max={max}
-            title={`${currentValue.toFixed(1)}${sensor.type === "temperature" ? "°C" : sensor.type === "humidity" ? "%" : " hPa"}`}
-          />
-        </Box>
-      </Card>
+        <Typography variant="h6">
+          {value.toFixed(1)}
+        </Typography>
+      </Paper>
     );
   };
 
-  // Render dashboard content
-  const renderDashboardContent = () => {
-    return Object.entries(groupedSensors).map(([key, sensors]) => (
-      <Box key={key} sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          {groupBy === "type" ? `${key} Sensors` : `Client ${key}`}
-        </Typography>
-        {layout === "grid" ? (
-          <GridLayout
-            items={sensors}
-            renderItem={renderChart}
-            onLayoutChange={(newLayout) => handleLayoutSave(key, newLayout)}
-            savedLayout={layouts[key]}
-            itemWidth={3}
-            itemHeight={6}
-            totalCols={12}
-          />
-        ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {sensors.map((sensor) => (
-              <Box key={`${sensor.clientId}-${sensor.type}`}>
-                {renderChart(sensor)}
-              </Box>
-            ))}
+  const renderClientBox = (client: ClientData) => {
+    const layout = client.sensors.map((sensor, index) => ({
+      i: `${client.clientId}-${sensor.sensorId}`,
+      x: index,
+      y: 0,
+      w: 1,
+      h: 1,
+      // static: true,
+    }));
+
+    const containerWidth = containerWidths[client.clientId] || 0;
+
+    return (
+      <Grid item xs={12} md={6} lg={4} key={client.clientId}>
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 3,
+            height: '100%',
+            bgcolor: 'white',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            {client.clientId}
+          </Typography>
+          <Box 
+            ref={el => containerRefs.current[client.clientId] = el}
+            data-client-id={client.clientId}
+            sx={{ 
+              bgcolor: 'grey.100', 
+              p: 2, 
+              borderRadius: 1,
+              minHeight: '120px'
+            }}
+          >
+            {containerWidth > 0 && (
+              <GridLayout
+                className="layout"
+                layout={layout}
+                cols={4}
+                rowHeight={80}
+                width={containerWidth - 32} // Subtract padding (16px * 2)
+                isDraggable={true}
+                isResizable={true}
+                margin={[10, 10]}
+                containerPadding={[0, 0]}
+              >
+                {client.sensors.map((sensor) => (
+                  <div key={`${client.clientId}-${sensor.sensorId}`}>
+                    {renderSensorBox(sensor.sensorId, sensor.value)}
+                  </div>
+                ))}
+              </GridLayout>
+            )}
           </Box>
-        )}
-      </Box>
-    ));
+        </Paper>
+      </Grid>
+    );
   };
 
   return (
     <Box sx={{
-      ...dashboardStyles.container,
+      p: 3,
       height: '100vh',
-      overflow: 'hidden', // Prevent double scrollbars
+      overflow: 'auto',
+      bgcolor: 'grey.50',
     }}>
-      <WebSocketTest />
-      {/* Header */}
-      <Box sx={dashboardStyles.header}>
-        <Typography variant="h5">Sensor Dashboard</Typography>
-        <Box sx={dashboardStyles.controls}>
-        <Tooltip title="Reset Layout">
-            <IconButton onClick={() => {
-              localStorage.removeItem("dashboardLayouts");
-              setLayouts({});
-            }}>
-              <RestartAltIcon />
-            </IconButton>
-          </Tooltip>
-          <FormControl size="small" sx={{ minWidth: 120, mr: 2 }}>
-            <Select value={groupBy} onChange={handleGroupByChange}>
-              <MenuItem value="type">Group by Type</MenuItem>
-              <MenuItem value="clientId">Group by Client</MenuItem>
-            </Select>
-          </FormControl>
-          <ToggleButtonGroup
-            value={layout}
-            exclusive
-            onChange={handleLayoutChange}
-            size="small"
-          >
-            <ToggleButton value="grid">
-              <Tooltip title="Grid View">
-                <ViewModuleIcon />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="list">
-              <Tooltip title="List View">
-                <ViewListIcon />
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-         
-
-        </Box>
-      </Box>
-
-      {/* Dashboard Content */}
-      <Box sx={{
-        ...dashboardStyles.gridContainer,
-        flex: 1,
-        overflowY: 'auto',
-        p: 3,
-      }}>
-        {renderDashboardContent()}
-      </Box>
+      <Typography variant="h4" sx={{ mb: 4 }}>
+        Sensor Dashboard
+      </Typography>
+      <Grid container spacing={3}>
+        {clientSensors.map(renderClientBox)}
+      </Grid>
     </Box>
   );
 };
