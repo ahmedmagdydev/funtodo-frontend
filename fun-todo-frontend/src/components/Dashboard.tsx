@@ -96,6 +96,7 @@ export const Dashboard: React.FC = () => {
       // Observe all container refs
       Object.entries(containerRefs.current).forEach(([clientId, element]) => {
         if (element) {
+          console.log(clientId)
           resizeObserver.current?.observe(element);
         }
       });
@@ -192,7 +193,9 @@ export const Dashboard: React.FC = () => {
             </FormControl>
           </Stack>
           <Box 
-            ref={el => containerRefs.current[client.clientId] = el}
+            ref={(el: HTMLDivElement | null) => {
+              containerRefs.current[client.clientId] = el;
+            }}
             data-client-id={client.clientId}
             sx={{ 
               bgcolor: 'grey.100', 
