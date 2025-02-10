@@ -1,4 +1,4 @@
-import { ClientData, SensorData } from '../types/dashboard';
+import { ClientData, SensorData } from "../types/dashboard";
 
 type WebSocketListener = (data: ClientData[]) => void;
 
@@ -20,10 +20,10 @@ class WebSocketService {
   }
 
   private connect() {
-    this.ws = new WebSocket('ws://localhost:8080');
+    this.ws = new WebSocket(import.meta.env.VITE_WEBSOCKET_URL);
 
     this.ws.onopen = () => {
-      console.log('WebSocket connection established');
+      console.log("WebSocket connection established");
     };
 
     this.ws.onmessage = (event) => {
@@ -33,9 +33,9 @@ class WebSocketService {
         const messagePayload = JSON.parse(data.message);
         const value: number = messagePayload.value;
 
-        const parts = typeString.split('/');
+        const parts = typeString.split("/");
         if (parts.length < 3) {
-          console.error('Unexpected type format:', typeString);
+          console.error("Unexpected type format:", typeString);
           return;
         }
         const clientId = parts[1];
@@ -43,22 +43,26 @@ class WebSocketService {
 
         this.updateClientSensors(clientId, sensorId, value);
       } catch (error) {
-        console.error('Error processing WebSocket message:', error);
+        console.error("Error processing WebSocket message:", error);
       }
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket connection closed');
+      console.log("WebSocket connection closed");
       // Attempt to reconnect after a delay
       setTimeout(() => this.connect(), 5000);
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
     };
   }
 
-  private updateClientSensors(clientId: string, sensorId: string, value: number) {
+  private updateClientSensors(
+    clientId: string,
+    sensorId: string,
+    value: number
+  ) {
     const clientIndex = this.clientSensors.findIndex(
       (client) => client.clientId === clientId
     );
@@ -82,9 +86,7 @@ class WebSocketService {
             );
 
       this.clientSensors = this.clientSensors.map((client, index) =>
-        index === clientIndex
-          ? { ...client, sensors: updatedSensors }
-          : client
+        index === clientIndex ? { ...client, sensors: updatedSensors } : client
       );
     }
 
@@ -100,7 +102,7 @@ class WebSocketService {
     this.listeners.add(listener);
     // Immediately send current state to new subscriber
     listener(this.clientSensors);
-    
+
     // Return unsubscribe function
     return () => {
       this.listeners.delete(listener);

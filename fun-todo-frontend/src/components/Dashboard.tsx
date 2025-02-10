@@ -146,17 +146,24 @@ export const Dashboard: React.FC = () => {
       }
       return b.value - a.value;
     });
+
+    const containerWidth = containerWidths[client.clientId] || 0;
+    
+    // Calculate optimal number of columns
+    // Minimum width for each sensor box (including margins)
+    const minSensorWidth = 80; // px
+    const margin = 10; // px
+    const totalMargin = margin * 2; // left and right margins
+    const availableWidth = containerWidth - 32; // subtract container padding
+    const optimalCols = Math.max(2, Math.floor(availableWidth / (minSensorWidth + totalMargin)));
     
     const layout = sortedSensors.map((sensor, index) => ({
       i: `${client.clientId}-${sensor.sensorId}`,
-      x: index,
-      y: 0,
+      x: index % optimalCols,
+      y: Math.floor(index / optimalCols),
       w: 1,
       h: 1,
     }));
-    console.log("🚀 ~ layout ~ layout:", layout)
-
-    const containerWidth = containerWidths[client.clientId] || 0;
 
     return (
       <Grid item xs={12} md={6} lg={4} key={client.clientId}>
@@ -198,12 +205,12 @@ export const Dashboard: React.FC = () => {
               <GridLayout
                 className="layout"
                 layout={layout}
-                cols={4}
+                cols={optimalCols}
                 rowHeight={80}
                 width={containerWidth - 32}
                 isDraggable={true}
-                isResizable={true}
-                margin={[10, 10]}
+                isResizable={false}
+                margin={[margin, margin]}
                 containerPadding={[0, 0]}
               >
                 {sortedSensors.map((sensor) => (
