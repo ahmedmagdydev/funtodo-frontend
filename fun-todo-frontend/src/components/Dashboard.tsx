@@ -94,7 +94,9 @@ export const Dashboard: React.FC = () => {
       resizeObserver.current.disconnect();
       
       // Observe all container refs
-      Object.entries(containerRefs.current).forEach(([clientId, element]) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      Object.entries(containerRefs.current).forEach(([_, element]) => {
+       
         if (element) {
           // console.log(clientId)
           resizeObserver.current?.observe(element);
