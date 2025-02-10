@@ -24,6 +24,26 @@ class WebSocketService {
 
     this.ws.onopen = () => {
       console.log("WebSocket connection established");
+      
+      if (this.ws) {
+        // Send authentication token
+        this.ws.send(
+          JSON.stringify({
+            token:
+              localStorage.getItem("token") ||
+              sessionStorage.getItem("token") ||
+              "",
+          })
+        );
+
+        // Subscribe to all sensors
+        this.ws.send(
+          JSON.stringify({
+            action: "subscribe",
+            sensor: "#",
+          })
+        );
+      }
     };
 
     this.ws.onmessage = (event) => {

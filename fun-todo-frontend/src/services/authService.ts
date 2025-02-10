@@ -105,14 +105,8 @@ export const authService = {
       });
 
       // Store the token based on remember me preference
-      if (response.data.access_token) {
-        storeToken(response.data.access_token, rememberMe);
-        const userInfo = await axios
-          .get("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: { Authorization: `Bearer ${response.data.access_token}` },
-          })
-          .then((res) => res.data);
-        console.log(userInfo);
+      if (response.data.token) {
+        storeToken(response.data.token, rememberMe);
       }
 
       return {

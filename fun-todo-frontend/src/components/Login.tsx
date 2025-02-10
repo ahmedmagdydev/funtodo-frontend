@@ -90,7 +90,7 @@ export const Login: React.FC = () => {
   const googleLogin = useGoogleLogin({
     onSuccess: async ({code}) => {
       try {
-        const result = await authService.googleSignIn(code, formik.values.rememberMe);
+        const result = await authService.googleSignIn(code);
         if (result.success) {
           setSubmitStatus({
             type: 'success',
