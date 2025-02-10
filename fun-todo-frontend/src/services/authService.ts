@@ -74,7 +74,7 @@ export const authService = {
         ...data,
       });
 
-      console.log("🚀 ~ response:", response);
+      // console.log("🚀 ~ response:", response);
       // Store the token based on remember me preference
       if (response.data.data.token) {
         storeToken(response.data.data.token, data.rememberMe);
@@ -98,7 +98,7 @@ export const authService = {
     req: any,
     rememberMe: boolean = false
   ): Promise<ApiResponse> {
-    console.log("🚀 ~ req:", req);
+    // console.log("🚀 ~ req:", req);
     try {
       const response = await axios.post(`${API_URL}/auth/google`, {
         access_token: req,

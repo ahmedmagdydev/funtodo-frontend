@@ -96,7 +96,7 @@ export const Dashboard: React.FC = () => {
       // Observe all container refs
       Object.entries(containerRefs.current).forEach(([clientId, element]) => {
         if (element) {
-          console.log(clientId)
+          // console.log(clientId)
           resizeObserver.current?.observe(element);
         }
       });
