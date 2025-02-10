@@ -4,6 +4,10 @@ import {
   Paper,
   Typography,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  Stack,
 } from "@mui/material";
 import GridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -12,15 +16,24 @@ import "react-resizable/css/styles.css";
 import WebSocketService from '../services/webSocket';
 import { ClientData } from "../types/dashboard";
 
+type SortOption = 'name' | 'value';
+
 const SENSOR_COLORS = {
   temperature: "#ff9800",
   humidity: "#2196f3",
   pressure: "#4caf50",
 };
 
+const SORT_OPTIONS_KEY = 'dashboard_sort_options';
+
 export const Dashboard: React.FC = () => {
   const [clientSensors, setClientSensors] = useState<ClientData[]>([]);
   const [containerWidths, setContainerWidths] = useState<{ [key: string]: number }>({});
+  const [clientSortOptions, setClientSortOptions] = useState<{ [key: string]: SortOption }>(() => {
+    // Initialize from localStorage
+    const savedOptions = localStorage.getItem(SORT_OPTIONS_KEY);
+    return savedOptions ? JSON.parse(savedOptions) : {};
+  });
   const containerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const resizeObserver = useRef<ResizeObserver | null>(null);
 
@@ -29,6 +42,23 @@ export const Dashboard: React.FC = () => {
     
     const unsubscribe = webSocketService.subscribe((data) => {
       setClientSensors(data);
+      // Initialize sort options for new clients without affecting existing ones
+      setClientSortOptions(prev => {
+        const newSortOptions = { ...prev };
+        let hasChanges = false;
+        
+        data.forEach(client => {
+          if (!newSortOptions[client.clientId]) {
+            newSortOptions[client.clientId] = 'name';
+            hasChanges = true;
+          }
+        });
+        
+        if (hasChanges) {
+          localStorage.setItem(SORT_OPTIONS_KEY, JSON.stringify(newSortOptions));
+        }
+        return newSortOptions;
+      });
     });
 
     return () => {
@@ -72,6 +102,17 @@ export const Dashboard: React.FC = () => {
     }
   }, [clientSensors]);
 
+  const handleSortChange = (clientId: string, sortOption: SortOption) => {
+    setClientSortOptions(prev => {
+      const newOptions = {
+        ...prev,
+        [clientId]: sortOption
+      };
+      localStorage.setItem(SORT_OPTIONS_KEY, JSON.stringify(newOptions));
+      return newOptions;
+    });
+  };
+
   const renderSensorBox = (sensorId: string, value: number) => {
     return (
       <Paper
@@ -97,14 +138,23 @@ export const Dashboard: React.FC = () => {
   };
 
   const renderClientBox = (client: ClientData) => {
-    const layout = client.sensors.map((sensor, index) => ({
+    const sortOption = clientSortOptions[client.clientId] || 'name';
+    
+    const sortedSensors = [...client.sensors].sort((a, b) => {
+      if (sortOption === 'name') {
+        return a.sensorId.localeCompare(b.sensorId);
+      }
+      return b.value - a.value;
+    });
+    
+    const layout = sortedSensors.map((sensor, index) => ({
       i: `${client.clientId}-${sensor.sensorId}`,
       x: index,
       y: 0,
       w: 1,
       h: 1,
-      // static: true,
     }));
+    console.log("🚀 ~ layout ~ layout:", layout)
 
     const containerWidth = containerWidths[client.clientId] || 0;
 
@@ -119,9 +169,21 @@ export const Dashboard: React.FC = () => {
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            {client.clientId}
-          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              {client.clientId}
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={sortOption}
+                onChange={(e) => handleSortChange(client.clientId, e.target.value as SortOption)}
+                variant="outlined"
+              >
+                <MenuItem value="name">Sort by Name</MenuItem>
+                <MenuItem value="value">Sort by Value</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
           <Box 
             ref={el => containerRefs.current[client.clientId] = el}
             data-client-id={client.clientId}
@@ -138,13 +200,13 @@ export const Dashboard: React.FC = () => {
                 layout={layout}
                 cols={4}
                 rowHeight={80}
-                width={containerWidth - 32} // Subtract padding (16px * 2)
+                width={containerWidth - 32}
                 isDraggable={true}
                 isResizable={true}
                 margin={[10, 10]}
                 containerPadding={[0, 0]}
               >
-                {client.sensors.map((sensor) => (
+                {sortedSensors.map((sensor) => (
                   <div key={`${client.clientId}-${sensor.sensorId}`}>
                     {renderSensorBox(sensor.sensorId, sensor.value)}
                   </div>
