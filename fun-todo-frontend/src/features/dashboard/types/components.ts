@@ -1,10 +1,10 @@
-import { ClientData, SortOption, ViewMode } from "./dashboard";
+import { ClientData, SensorValue, SortOption, ViewMode } from "./dashboard";
 
 export interface SensorBoxProps {
   /** The unique identifier for the sensor */
   sensorId: string;
-  /** The current value of the sensor */
-  value: number;
+  /** The current values of the sensor */
+  values: SensorValue[];
 }
 
 export interface SensorBarChartProps {
@@ -38,13 +38,13 @@ export interface ClientBoxProps {
   /** The width of the container in pixels */
   containerWidth: number;
   /** The current sort option for this client's sensors */
-  sortOption: SortOption;
+  sortOption: string;
   /** The current view mode */
-  viewMode: ViewMode;
+  viewMode: string;
   /** Callback function when sort option changes */
   onSortChange: (clientId: string, sortOption: SortOption) => void;
   /** Ref callback for the container element */
-  containerRef: (el: HTMLDivElement | null) => void;
+  containerRef: React.RefObject<HTMLDivElement>;
 }
 
 export type DashboardProps = unknown;

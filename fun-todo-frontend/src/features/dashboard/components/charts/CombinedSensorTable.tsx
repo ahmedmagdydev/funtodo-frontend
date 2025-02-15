@@ -4,25 +4,46 @@ import { DataGrid } from '@mui/x-data-grid';
 import { CombinedSensorTableProps } from '../../types/components';
 
 export const CombinedSensorTable: React.FC<CombinedSensorTableProps> = ({ clients }) => {
-  // Flatten all sensors from all clients into a single array
+  // Flatten all sensors and their values from all clients into a single array
   const rows = clients.flatMap(client =>
-    client.sensors.map((sensor, index) => ({
-      id: `${client.clientId}-${sensor.sensorId}-${index}`,
-      clientId: client.clientId,
-      sensorId: sensor.sensorId,
-      value: sensor.value,
-    }))
+    client.sensors.flatMap(sensor =>
+      sensor.values.map((value, index) => {
+        console.log('Processing value:', value); // Debug log
+        return {
+          id: `${client.clientId}-${sensor.sensorId}-${value.type}-${index}`,
+          clientId: client.clientId,
+          sensorId: sensor.sensorId,
+          type: value.type,
+          value: value.value,
+        };
+      })
+    )
   );
+
+  console.log('Generated rows:', rows); // Debug log
 
   const columns = [
     { field: 'clientId', headerName: 'Client', width: 130 },
     { field: 'sensorId', headerName: 'Sensor', width: 130 },
     { 
+      field: 'type', 
+      headerName: 'Type', 
+      width: 130,
+      valueFormatter: (params: any) => {
+        console.log('Type params:', params); // Debug log
+        return params.value === 't' ? 'Temperature' : 
+               params.value === 'h' ? 'Humidity' : 
+               params.value;
+      }
+    },
+    { 
       field: 'value', 
       headerName: 'Value', 
       width: 130,
-      renderCell: (params: any) => {
-        return params.value != null ? params.value.toFixed(1) : 'N/A';
+      valueFormatter: (params: any) => {
+        console.log('Value params:', params); // Debug log
+        // if (params.value === undefined || params.value === null) return 'N/A';
+        return Number(params).toFixed(2);
       }
     },
   ];
@@ -44,6 +65,9 @@ export const CombinedSensorTable: React.FC<CombinedSensorTableProps> = ({ client
         initialState={{
           pagination: {
             paginationModel: { pageSize: 25 },
+          },
+          sorting: {
+            sortModel: [{ field: 'clientId', sort: 'asc' }],
           },
         }}
         pageSizeOptions={[10, 25, 50, 100]}

@@ -48,15 +48,15 @@ class WebSocketService {
       try {
         const data = JSON.parse(event.data);
         // Parse the type which contains username/clientId/sensorId
-        if (data.type) {
-          const [username, clientId, sensorId] = data.type.split("/");
-          // Parse the message which contains the value
-          const messageData = JSON.parse(data.message);
+        if (data.values && data.topic) {
+          const [username, clientId, sensorId] = data.topic.split("/");
+          // Parse the values array which contains type and value pairs
+          const values = JSON.parse(data.values);
 
           this.updateClientSensors({
             clientId,
             sensorId,
-            value: messageData.value,
+            values,
           });
           this.notifyListeners();
         }
@@ -81,9 +81,9 @@ class WebSocketService {
   private updateClientSensors(data: {
     clientId: string;
     sensorId: string;
-    value: number;
+    values: { type: string; value: number }[];
   }) {
-    const { clientId, sensorId, value } = data;
+    const { clientId, sensorId, values } = data;
     const fullClientId = `${clientId}`;
 
     // Create a new array to ensure state updates are detected
@@ -96,7 +96,7 @@ class WebSocketService {
       // Add new client with sensor
       updatedClientSensors.push({
         clientId: fullClientId,
-        sensors: [{ sensorId, value }],
+        sensors: [{ sensorId, values }],
       });
     } else {
       // Update existing client's sensor
@@ -107,11 +107,11 @@ class WebSocketService {
 
       if (sensorIndex === -1) {
         // Add new sensor to existing client
-        client.sensors = [...client.sensors, { sensorId, value }];
+        client.sensors = [...client.sensors, { sensorId, values }];
       } else {
         // Update existing sensor
-        client.sensors = client.sensors.map(sensor =>
-          sensor.sensorId === sensorId ? { ...sensor, value } : sensor
+        client.sensors = client.sensors.map((sensor) =>
+          sensor.sensorId === sensorId ? { ...sensor, values } : sensor
         );
       }
       updatedClientSensors[clientIndex] = client;
