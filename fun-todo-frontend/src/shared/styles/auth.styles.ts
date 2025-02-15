@@ -20,35 +20,44 @@ export const authPageStyles: Record<string, SxProps<Theme>> = {
     position: "fixed",
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    overflowY: "auto",
   },
   formContainer: {
-    // width: '100%',
-    maxWidth: "380px",
-    margin: { xs: "16px", sm: "auto" },
-    padding: { xs: "12px", sm: "16px" },
-    flex: "none",
-  },
-  paper: {
-    p: { xs: 2, sm: 3 },
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    backdropFilter: "blur(10px)",
-    minHeight: {
-      xs: "450px",
-      sm: "480px",
-    },
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+    width: "100%",
+    maxWidth: 400,
+    padding: 3,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: 2,
+    backdropFilter: "blur(10px)",
   },
-  registerPaper: {
-    minHeight: {
-      xs: "520px",
-      sm: "550px",
-    },
+  formTitle: {
+    textAlign: "center",
+    marginBottom: 3,
+    color: "primary.main",
+  },
+  formField: {
+    marginBottom: 2,
+  },
+  submitButton: {
+    marginTop: 2,
+    marginBottom: 1,
+  },
+  dividerContainer: {
+    display: "flex",
+    alignItems: "center",
+    margin: "16px 0",
+  },
+  divider: {
+    flex: 1,
+  },
+  dividerText: {
+    margin: "0 16px",
+    color: "text.secondary",
+  },
+  googleButton: {
+    marginTop: 1,
+    marginBottom: 2,
+  },
+  linkText: {
+    textAlign: "center",
   },
 };

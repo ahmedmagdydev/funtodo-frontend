@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -9,40 +11,67 @@ import {
   Alert,
   Paper,
   Divider,
-  Link
+  Link,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
-import { registerValidationSchema } from '../validations/authValidation';
-import { authService } from '../services/authService';
-import type { RegisterFormData } from '../types/auth';
-import { useGoogleLogin } from '@react-oauth/google';
-import GoogleIcon from '@mui/icons-material/Google';
-import {  Link as RouterLink } from 'react-router-dom';
-import { authPageStyles } from '../styles/auth.styles';
+import { authService } from '../../../api/auth';
 
-export const Register: React.FC = () => {
+import { useGoogleLogin } from '@react-oauth/google';
+import { authPageStyles } from '../../../shared/styles/auth.styles';
+import GoogleIcon from '@mui/icons-material/Google';
+
+interface LoginFormData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+const loginValidationSchema = Yup.object().shape({
+  email: Yup.string()
+    .required('Email is required')
+    .email('Invalid email format'),
+  password: Yup.string()
+    .required('Password is required'),
+});
+
+export const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const verificationSuccess = location.state?.verificationSuccess;
+  const verificationMessage = location.state?.message;
+
   const [submitStatus, setSubmitStatus] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
 
-  const formik = useFormik<RegisterFormData>({
+  useEffect(() => {
+    if (verificationSuccess) {
+      setSubmitStatus({
+        type: 'success',
+        message: verificationMessage || 'Email verified successfully!'
+      });
+    }
+  }, [verificationSuccess, verificationMessage]);
+
+  const formik = useFormik<LoginFormData>({
     initialValues: {
-      firstName: '',
-      lastName: '',
       email: '',
       password: '',
-      confirmPassword: '',
+      rememberMe: false
     },
-    validationSchema: registerValidationSchema,
+    validationSchema: loginValidationSchema,
     onSubmit: async (values) => {
       try {
-        const response = await authService.register(values);
+        const response = await authService.login(values);
         if (response.success) {
           setSubmitStatus({
             type: 'success',
-            message: 'Registration successful! Please check your email to verify your account.',
+            message: 'Login successful!',
           });
-          formik.resetForm();
+          // Redirect to dashboard or home page after successful login
+          setTimeout(() => navigate('/dashboard'), 500);
         } else {
           setSubmitStatus({
             type: 'error',
@@ -68,6 +97,7 @@ export const Register: React.FC = () => {
             type: 'success',
             message: 'Google sign-in successful!',
           });
+          setTimeout(() => navigate('/dashboard'), 500);
         } else {
           setSubmitStatus({
             type: 'error',
@@ -96,13 +126,10 @@ export const Register: React.FC = () => {
       <Container sx={authPageStyles.formContainer} maxWidth="sm">
         <Paper 
           elevation={3} 
-          sx={() => ({
-            ...authPageStyles.paper,
-            ...authPageStyles.registerPaper
-          })}
+          sx={authPageStyles.paper}
         >
           <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Create Account
+            Login
           </Typography>
 
           {submitStatus.type && (
@@ -122,47 +149,6 @@ export const Register: React.FC = () => {
               gap: 2,
               height: '100%'
             }}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  id="firstName"
-                  name="firstName"
-                  label="First Name"
-                  value={formik.values.firstName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.firstName && Boolean(formik.errors.firstName)}
-                  helperText={formik.touched.firstName && formik.errors.firstName}
-                  FormHelperTextProps={{
-                    sx: {
-                      position: 'absolute',
-                      bottom: '-20px',
-                      marginBottom: 0
-                    }
-                  }}
-                  sx={{ mb: 3 }}
-                />
-                <TextField
-                  fullWidth
-                  id="lastName"
-                  name="lastName"
-                  label="Last Name"
-                  value={formik.values.lastName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.lastName && Boolean(formik.errors.lastName)}
-                  helperText={formik.touched.lastName && formik.errors.lastName}
-                  FormHelperTextProps={{
-                    sx: {
-                      position: 'absolute',
-                      bottom: '-20px',
-                      marginBottom: 0
-                    }
-                  }}
-                  sx={{ mb: 3 }}
-                />
-              </Box>
-
               <TextField
                 fullWidth
                 id="email"
@@ -181,7 +167,7 @@ export const Register: React.FC = () => {
                     marginBottom: 0
                   }
                 }}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} 
               />
 
               <TextField
@@ -202,28 +188,20 @@ export const Register: React.FC = () => {
                     marginBottom: 0
                   }
                 }}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} 
               />
 
-              <TextField
-                fullWidth
-                id="confirmPassword"
-                name="confirmPassword"
-                label="Confirm Password"
-                type="password"
-                value={formik.values.confirmPassword}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
-                helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
-                FormHelperTextProps={{
-                  sx: {
-                    position: 'absolute',
-                    bottom: '-20px',
-                    marginBottom: 0
-                  }
-                }}
-                sx={{ mb: 3 }}
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formik.values.rememberMe}
+                    onChange={formik.handleChange}
+                    color="primary"
+                  />
+                }
+                label="Remember me"
               />
 
               <Box sx={{ mt: 'auto' }}>
@@ -235,7 +213,7 @@ export const Register: React.FC = () => {
                   fullWidth
                   disabled={formik.isSubmitting}
                 >
-                  {formik.isSubmitting ? 'Creating Account...' : 'Create Account'}
+                  {formik.isSubmitting ? 'Logging in...' : 'Login'}
                 </Button>
 
                 <Divider sx={{ my: 2 }}>OR</Divider>
@@ -253,9 +231,9 @@ export const Register: React.FC = () => {
 
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
                   <Typography variant="body2">
-                    Already have an account?{' '}
-                    <Link component={RouterLink} to="/login">
-                      Login here
+                    Don't have an account?{' '}
+                    <Link component={RouterLink} to="/register">
+                      Register here
                     </Link>
                   </Typography>
                 </Box>

@@ -19,13 +19,8 @@ export const generateSalt = (): string => {
 
 // Hash password with salt using SHA-256
 export const hashPassword = async (password: string, salt: string): Promise<string> => {
-  // Combine password and salt
-  const combinedInput = password + salt;
-  const msgBuffer = stringToBytes(combinedInput);
-  
-  // Hash the combined input
+  const passwordWithSalt = password + salt;
+  const msgBuffer = stringToBytes(passwordWithSalt);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashedPassword = bufferToHex(hashBuffer);
-  
-  return hashedPassword;
+  return bufferToHex(hashBuffer);
 };

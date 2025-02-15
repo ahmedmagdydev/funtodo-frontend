@@ -1,11 +1,11 @@
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
-import { Register } from './components/Register';
-import { Login } from './components/Login';
-import { VerifyEmail } from './components/VerifyEmail';
-import { Dashboard } from './components/Dashboard';
-import { LandingPage } from './components/landing';
-import PrivateRoute from "./components/PrivateRoute";
+import { Register } from './features/auth/components/Register';
+import { Login } from './features/auth/components/Login';
+import { VerifyEmail } from './features/auth/components/VerifyEmail';
+import { Dashboard } from './features/dashboard/components/Dashboard';
+import { LandingPage } from './features/landing/components/landing';
+import PrivateRoute from "./shared/components/PrivateRoute";
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 
 const theme = createTheme({

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Box, CircularProgress, Typography, Container } from '@mui/material';
-import axios from 'axios';
+import { Box, Container, Typography, CircularProgress, Alert } from '@mui/material';
+import { authService } from '../../../api/auth';
+import { ApiResponse } from '../../../shared/types/api';
 
 export const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -18,9 +19,9 @@ export const VerifyEmail = () => {
       }
 
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/verify?token=${token}`);
+        const response: ApiResponse = await authService.verifyEmail(token);
         
-        if (response.data.success) {
+        if (response.success) {
           // Show success message and redirect to login
           navigate('/login', { 
             state: { 

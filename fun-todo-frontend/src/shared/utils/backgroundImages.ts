@@ -1,9 +1,9 @@
 // Collection of curated background images from Picsum
 // Each image is chosen for its professional and clean aesthetic
-import bg1 from "../assets/bg1.png";
-import bg2 from "../assets/bg2.png";
-import bg3 from "../assets/bg3.png";
-import bg4 from "../assets/bg4.png";
+import bg1 from "../../assets/bg1.png";
+import bg2 from "../../assets/bg2.png";
+import bg3 from "../../assets/bg3.png";
+import bg4 from "../../assets/bg4.png";
 
 const backgroundImages = [bg1, bg2, bg3, bg4];
 

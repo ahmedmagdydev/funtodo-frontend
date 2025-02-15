@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
@@ -18,12 +19,9 @@ import { GridViewRounded, BarChartRounded, TableChartRounded } from '@mui/icons-
 import { BarChart } from '@mui/x-charts/BarChart';
 import { DataGrid } from '@mui/x-data-grid';
 
-import WebSocketService from '../services/webSocket';
-import { ClientData } from "../types/dashboard";
-
-type SortOption = 'name' | 'value';
-type ViewMode = 'grid' | 'bar' | 'table';
-
+import WebSocketService from "../../../api/websocket";
+import { ClientData, SortOption, ViewMode } from "../types/dashboard";
+ 
 const SENSOR_COLORS = {
   temperature: "#ff9800",
   humidity: "#2196f3",
@@ -158,6 +156,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const renderSensorBox = (sensorId: string, value: number) => {
+    const displayValue = value != null ? value.toFixed(1) : 'N/A';
     return (
       <Paper
         sx={{
@@ -175,7 +174,7 @@ export const Dashboard: React.FC = () => {
           {sensorId}
         </Typography>
         <Typography variant="h6">
-          {value.toFixed(1)}
+          {displayValue}
         </Typography>
       </Paper>
     );
@@ -199,19 +198,50 @@ export const Dashboard: React.FC = () => {
     );
   };
 
-  const renderTableView = (client: ClientData) => {
+  const renderTableView = () => {
+    // Flatten all sensors from all clients into a single array
+    const rows = clientSensors.flatMap(client =>
+      client.sensors.map((sensor, index) => ({
+        id: `${client.clientId}-${sensor.sensorId}-${index}`,
+        clientId: client.clientId,
+        sensorId: sensor.sensorId,
+        value: sensor.value,
+      }))
+    );
+
     const columns = [
+      { field: 'clientId', headerName: 'Client', width: 130 },
       { field: 'sensorId', headerName: 'Sensor', width: 130 },
-      { field: 'value', headerName: 'Value', width: 130 },
+      { 
+        field: 'value', 
+        headerName: 'Value', 
+        width: 130,
+        renderCell: (params: any) => {
+          return params.value != null ? params.value.toFixed(1) : 'N/A';
+        }
+      },
     ];
 
     return (
-      <Box sx={{ height: 400, mb: 2 }}>
+      <Box sx={{ 
+        height: 'calc(100vh - 120px)', // Account for padding and controls
+        width: '100%',
+        mb: 2,
+        '& .MuiDataGrid-root': {
+          backgroundColor: 'white',
+          borderRadius: 2,
+        }
+      }}>
         <DataGrid
-          rows={client.sensors}
+          rows={rows}
           columns={columns}
-          getRowId={(row) => row.sensorId}
           disableRowSelectionOnClick
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 25 },
+            },
+          }}
+          pageSizeOptions={[10, 25, 50, 100]}
         />
       </Box>
     );
@@ -245,8 +275,6 @@ export const Dashboard: React.FC = () => {
     switch (viewMode) {
       case 'bar':
         return renderBarChart(client);
-      case 'table':
-        return renderTableView(client);
       default:
         return (
           <Grid item xs={12} md={6} lg={6} key={client.clientId}>
@@ -335,16 +363,20 @@ export const Dashboard: React.FC = () => {
   );
 
   return (
-    <Box sx={{
+    <Box sx={{ 
       p: 3,
       height: '100vh',
       overflow: 'auto',
-      bgcolor: 'grey.50',
+      bgcolor: 'grey.50'
     }}>
       {renderViewControls()}
-      <Grid container spacing={3}>
-        {clientSensors.map(renderClientBox)}
-      </Grid>
+      {viewMode === 'table' ? (
+        renderTableView()
+      ) : (
+        <Grid container spacing={3}>
+          {clientSensors.map((client) => renderClientBox(client))}
+        </Grid>
+      )}
     </Box>
   );
 };

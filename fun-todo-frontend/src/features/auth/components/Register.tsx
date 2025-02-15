@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+ 
+import {  Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -9,68 +9,42 @@ import {
   TextField,
   Typography,
   Alert,
-  Paper,
-  Divider,
   Link,
-  FormControlLabel,
-  Checkbox
+   Divider,
+  Paper,
 } from '@mui/material';
+import { authService } from '../../../api/auth';
+import { RegisterFormData } from '../types/auth';
+
+import { registerValidationSchema } from '../../../shared/validations/authValidation';
 import { useGoogleLogin } from '@react-oauth/google';
 import GoogleIcon from '@mui/icons-material/Google';
-import { authService } from '../services/authService';
-import { authPageStyles } from '../styles/auth.styles';
+import { authPageStyles } from '../../../shared/styles/auth.styles';
 
-interface LoginFormData {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
-
-const loginValidationSchema = Yup.object().shape({
-  email: Yup.string()
-    .required('Email is required')
-    .email('Invalid email format'),
-  password: Yup.string()
-    .required('Password is required'),
-});
-
-export const Login: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const verificationSuccess = location.state?.verificationSuccess;
-  const verificationMessage = location.state?.message;
-
+export const Register: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
 
-  useEffect(() => {
-    if (verificationSuccess) {
-      setSubmitStatus({
-        type: 'success',
-        message: verificationMessage || 'Email verified successfully!'
-      });
-    }
-  }, [verificationSuccess, verificationMessage]);
-
-  const formik = useFormik<LoginFormData>({
+  const formik = useFormik<RegisterFormData>({
     initialValues: {
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
-      rememberMe: false
+      confirmPassword: '',
     },
-    validationSchema: loginValidationSchema,
+    validationSchema: registerValidationSchema,
     onSubmit: async (values) => {
       try {
-        const response = await authService.login(values);
+        const response = await authService.register(values);
         if (response.success) {
           setSubmitStatus({
             type: 'success',
-            message: 'Login successful!',
+            message: 'Registration successful! Please check your email to verify your account.',
           });
-          // Redirect to dashboard or home page after successful login
-          setTimeout(() => navigate('/dashboard'), 500);
+          formik.resetForm();
         } else {
           setSubmitStatus({
             type: 'error',
@@ -96,7 +70,6 @@ export const Login: React.FC = () => {
             type: 'success',
             message: 'Google sign-in successful!',
           });
-          setTimeout(() => navigate('/dashboard'), 500);
         } else {
           setSubmitStatus({
             type: 'error',
@@ -128,7 +101,7 @@ export const Login: React.FC = () => {
           sx={authPageStyles.paper}
         >
           <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Login
+            Create Account
           </Typography>
 
           {submitStatus.type && (
@@ -148,6 +121,47 @@ export const Login: React.FC = () => {
               gap: 2,
               height: '100%'
             }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  id="firstName"
+                  name="firstName"
+                  label="First Name"
+                  value={formik.values.firstName}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.firstName && Boolean(formik.errors.firstName)}
+                  helperText={formik.touched.firstName && formik.errors.firstName}
+                  FormHelperTextProps={{
+                    sx: {
+                      position: 'absolute',
+                      bottom: '-20px',
+                      marginBottom: 0
+                    }
+                  }}
+                  sx={{ mb: 3 }}
+                />
+                <TextField
+                  fullWidth
+                  id="lastName"
+                  name="lastName"
+                  label="Last Name"
+                  value={formik.values.lastName}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+                  helperText={formik.touched.lastName && formik.errors.lastName}
+                  FormHelperTextProps={{
+                    sx: {
+                      position: 'absolute',
+                      bottom: '-20px',
+                      marginBottom: 0
+                    }
+                  }}
+                  sx={{ mb: 3 }}
+                />
+              </Box>
+
               <TextField
                 fullWidth
                 id="email"
@@ -166,7 +180,7 @@ export const Login: React.FC = () => {
                     marginBottom: 0
                   }
                 }}
-                sx={{ mb: 3 }} 
+                sx={{ mb: 3 }}
               />
 
               <TextField
@@ -187,20 +201,28 @@ export const Login: React.FC = () => {
                     marginBottom: 0
                   }
                 }}
-                sx={{ mb: 3 }} 
+                sx={{ mb: 3 }}
               />
 
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    id="rememberMe"
-                    name="rememberMe"
-                    checked={formik.values.rememberMe}
-                    onChange={formik.handleChange}
-                    color="primary"
-                  />
-                }
-                label="Remember me"
+              <TextField
+                fullWidth
+                id="confirmPassword"
+                name="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                value={formik.values.confirmPassword}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
+                helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
+                FormHelperTextProps={{
+                  sx: {
+                    position: 'absolute',
+                    bottom: '-20px',
+                    marginBottom: 0
+                  }
+                }}
+                sx={{ mb: 3 }}
               />
 
               <Box sx={{ mt: 'auto' }}>
@@ -212,7 +234,7 @@ export const Login: React.FC = () => {
                   fullWidth
                   disabled={formik.isSubmitting}
                 >
-                  {formik.isSubmitting ? 'Logging in...' : 'Login'}
+                  {formik.isSubmitting ? 'Creating Account...' : 'Create Account'}
                 </Button>
 
                 <Divider sx={{ my: 2 }}>OR</Divider>
@@ -230,9 +252,9 @@ export const Login: React.FC = () => {
 
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
                   <Typography variant="body2">
-                    Don't have an account?{' '}
-                    <Link component={RouterLink} to="/register">
-                      Register here
+                    Already have an account?{' '}
+                    <Link component={RouterLink} to="/login">
+                      Login here
                     </Link>
                   </Typography>
                 </Box>

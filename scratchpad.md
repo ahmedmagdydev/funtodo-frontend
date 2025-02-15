@@ -32,3 +32,140 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 ## Reusable Information
 
 - Library: `jwt-decode`
+
+# Current Task: Project Restructuring
+
+## Current Structure Analysis
+The project is a React/TypeScript frontend application with the following structure:
+- `src/`
+  - `components/` - React components
+  - `hooks/` - Custom React hooks
+  - `services/` - API and service layer
+  - `types/` - TypeScript type definitions
+  - `utils/` - Utility functions
+  - `validations/` - Form validation logic
+  - `assets/` - Static assets
+  - `styles/` - CSS and style files
+
+## Proposed Restructuring Plan
+
+### 1. Component Organization
+[X] Review current components directory
+[X] Create feature-based modules:
+  - `src/features/` directory for feature-specific code
+  - Move related components, hooks, and logic into feature modules
+  - Each feature module should have its own:
+    - Components
+    - Hooks
+    - Types
+    - Utils
+    - Tests
+
+### 2. Shared Code Organization
+[ ] Create `src/shared/` directory for:
+  - Common components
+  - Utility functions
+  - Types
+  - Constants
+  - Hooks used across features
+
+### 3. API Layer Restructuring
+[ ] Improve services organization:
+  - Create `src/api/` directory
+  - Separate API clients by domain
+  - Add proper error handling
+  - Add request/response types
+  - Add API documentation
+
+### 4. State Management
+[ ] Review and organize state management:
+  - Separate global and local state
+  - Create dedicated stores for features
+  - Add proper TypeScript types for state
+
+### 5. Testing Structure
+[ ] Set up proper test organization:
+  - Add `__tests__` directories in each feature
+  - Set up test utilities
+  - Add test configuration
+
+### 6. Build and Configuration
+[ ] Organize build and config files:
+  - Review and update TypeScript configuration
+  - Optimize build process
+  - Add proper environment configuration
+
+## Progress
+[X] Analyzed current project structure
+[X] Moved Auth components
+[X] Created feature-based modules
+[X] Moved components to features
+[X] Moved types to features
+[X] Moved services to api
+[X] Updated component imports
+[X] Organized shared code
+[ ] Set up testing structure
+[ ] Update build configuration
+
+## Component Movement Progress
+
+### Completed
+[X] Auth components moved:
+  - `Login.tsx`
+  - `Register.tsx`
+  - `VerifyEmail.tsx`
+[X] Dashboard feature:
+  - Move `src/components/Dashboard.tsx` → `src/features/dashboard/components/`
+  - Move `src/components/charts/*` → `src/features/dashboard/components/charts/`
+[X] Landing feature:
+  - Move `src/components/landing.tsx` → `src/features/landing/components/`
+[X] WebSocket feature:
+  - Move `src/components/WebSocket.tsx` → `src/features/websocket/components/`
+[X] Shared components:
+  - Move `src/components/PrivateRoute.tsx` → `src/shared/components/`
+[X] Update import paths in App.tsx
+
+### Next Steps
+1. [X] Move components to feature modules
+2. [X] Move types to feature modules:
+   - [X] Move dashboard types to dashboard feature
+   - [X] Move auth types to auth feature
+   - [X] Move websocket types to websocket feature
+   - [X] Move ApiResponse to shared types
+3. [X] Move services to api directory:
+   - [X] Move auth service
+   - [X] Move websocket service
+4. [X] Update imports in components to use new paths:
+   - [X] Update auth components
+   - [X] Update dashboard components
+   - [X] Update websocket components
+5. [X] Set up shared module structure:
+   - [X] Move shared utilities (crypto.ts, backgroundImages.ts)
+   - [X] Move shared validations (authValidation.ts)
+   - [X] Move shared styles (auth.styles.ts, dashboard.styles.ts)
+6. [ ] Set up testing structure:
+   - [ ] Add __tests__ directories in each feature
+   - [ ] Set up test utilities
+   - [ ] Add test configuration
+7. [ ] Review and update build configuration
+
+### Notes
+- Keep original files until all imports are updated and tested
+- Test each component after moving to ensure functionality
+- Update any relative paths in the components
+
+## Next Actions
+1. Set up testing structure with __tests__ directories
+2. Review and update build configuration
+
+## Next Steps
+1. Start with creating the feature-based module structure
+2. Move existing components into appropriate feature modules
+3. Create shared module for common code
+4. Update imports and dependencies
+
+## Notes
+- Need to ensure backward compatibility during restructuring
+- Will need to update import paths across the project
+- Should maintain TypeScript strict mode
+- Consider adding proper documentation for the new structure

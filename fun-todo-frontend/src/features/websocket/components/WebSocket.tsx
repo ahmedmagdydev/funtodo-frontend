@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ClientData } from '../types/dashboard';
-import WebSocketService from '../services/webSocket';
+import { ClientData } from '../../../features/dashboard/types/dashboard';
+import WebSocketService from '../../../api/websocket';
 
 const WebSocketComponent: React.FC = () => {
   const [clientSensors, setClientSensors] = useState<ClientData[]>([]);

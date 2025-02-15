@@ -6,7 +6,6 @@ export interface MqttMessage {
   value: number;
 }
 
-// types.ts
 export interface SensorData {
   sensorId: string;
   value: number;
@@ -19,7 +18,4 @@ export interface ClientData {
 
 export type ViewMode = "grid" | "bar" | "table";
 
-export interface ViewConfig {
-  mode: ViewMode;
-  showLabels?: boolean;
-}
+export type SortOption = "name" | "value";
