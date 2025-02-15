@@ -6,9 +6,14 @@ export interface MqttMessage {
   value: number;
 }
 
+export interface SensorValue {
+  type: string;
+  value: number;
+}
+
 export interface SensorData {
   sensorId: string;
-  value: number;
+  values: SensorValue[];
 }
 
 export interface ClientData {

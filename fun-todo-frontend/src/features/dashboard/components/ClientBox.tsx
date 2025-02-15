@@ -22,14 +22,17 @@ export const ClientBox: React.FC<ClientBoxProps> = ({
     if (sortOption === 'name') {
       return a.sensorId.localeCompare(b.sensorId);
     }
-    return b.value - a.value;
+    // Sort by the first value of each sensor as default
+    const aValue = a.values[0]?.value || 0;
+    const bValue = b.values[0]?.value || 0;
+    return bValue - aValue;
   });
 
   // Create layout for grid items
   const layout = sortedSensors.map((sensor, i) => ({
     i: `${client.clientId}-${sensor.sensorId}`,
-    x: i % 8,  // 8 columns per row
-    y: Math.floor(i / 8),  // New row every 8 items
+    x: i % 4,  // 4 columns per row to make boxes bigger
+    y: Math.floor(i / 4),  // New row every 4 items
     w: 1,
     h: 1,
   }));
@@ -45,19 +48,19 @@ export const ClientBox: React.FC<ClientBoxProps> = ({
           <ReactGridLayout
             className="layout"
             layout={layout}
-            cols={8}
-            rowHeight={80}
+            cols={4}
+            rowHeight={160}
             width={containerWidth}
             isDraggable={false}
             isResizable={false}
-            margin={[8, 8]}
-            containerPadding={[8, 8]}
-            compactType={null}
-            preventCollision={true}
+            margin={[10, 10]}
           >
             {sortedSensors.map((sensor) => (
               <div key={`${client.clientId}-${sensor.sensorId}`}>
-                <SensorBox sensorId={sensor.sensorId} value={sensor.value} />
+                <SensorBox
+                  sensorId={sensor.sensorId}
+                  values={sensor.values}
+                />
               </div>
             ))}
           </ReactGridLayout>
