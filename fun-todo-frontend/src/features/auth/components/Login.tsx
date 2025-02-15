@@ -90,6 +90,7 @@ export const Login: React.FC = () => {
 
   const googleLogin = useGoogleLogin({
     onSuccess: async ({code}) => {
+      console.log("🚀 ~ onSuccess: ~ code:", code)
       try {
         const result = await authService.googleSignIn(code);
         if (result.success) {

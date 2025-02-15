@@ -7,6 +7,7 @@ import { ApiResponse } from "../shared/types/api";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 const storeToken = (token: string, rememberMe: boolean = false) => {
+  console.log("🚀 ~ storeToken ~ token:", token);
   if (rememberMe) {
     localStorage.setItem("token", token);
   } else {
@@ -76,8 +77,8 @@ export const authService = {
         access_token: req,
       });
 
-      if (response.data.success && response.data.data?.token) {
-        storeToken(response.data.data.token, rememberMe);
+      if (response.data.success && response.data?.token) {
+        storeToken(response.data.token, rememberMe);
       }
 
       return response.data;
@@ -97,6 +98,7 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
+    console.log("🚀 ~ isAuthenticated ~ getToken():", getToken());
     return !!getToken();
   },
 };
