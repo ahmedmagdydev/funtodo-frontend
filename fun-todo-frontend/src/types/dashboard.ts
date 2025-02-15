@@ -16,3 +16,10 @@ export interface ClientData {
   clientId: string;
   sensors: SensorData[];
 }
+
+export type ViewMode = "grid" | "bar" | "table";
+
+export interface ViewConfig {
+  mode: ViewMode;
+  showLabels?: boolean;
+}
