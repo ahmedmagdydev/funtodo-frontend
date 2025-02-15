@@ -74,7 +74,7 @@ export const Dashboard: React.FC = () => {
     };
   }, []);
 
-  const handleViewChange = (event: React.MouseEvent<HTMLElement>, newMode: ViewMode | null) => {
+  const handleViewChange = (_event: React.MouseEvent<HTMLElement>, newMode: ViewMode | null) => {
     if (newMode !== null) {
       setViewMode(newMode);
     }
@@ -130,9 +130,7 @@ export const Dashboard: React.FC = () => {
                 sortOption={clientSortOptions[client.clientId] || 'name'}
                 viewMode="bar"
                 onSortChange={handleSortChange}
-                containerRef={(el) => {
-                  containerRefs.current[client.clientId] = el;
-                }}
+                containerRef={(el) => containerRefs.current[client.clientId] = el}
               />
             </Grid>
           ))}

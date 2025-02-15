@@ -44,7 +44,7 @@ export interface ClientBoxProps {
   /** Callback function when sort option changes */
   onSortChange: (clientId: string, sortOption: SortOption) => void;
   /** Ref callback for the container element */
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: (element: HTMLDivElement | null) => void;
 }
 
 export type DashboardProps = unknown;

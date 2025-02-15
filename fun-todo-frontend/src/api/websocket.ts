@@ -1,4 +1,4 @@
-import { ClientData, SensorData } from "../features/dashboard/types/dashboard";
+import { ClientData } from "../features/dashboard/types/dashboard";
 import { getToken } from "./auth";
 
 type WebSocketListener = (data: ClientData[]) => void;
@@ -50,6 +50,7 @@ class WebSocketService {
         // Parse the type which contains username/clientId/sensorId
         if (data.values && data.topic) {
           const [username, clientId, sensorId] = data.topic.split("/");
+          console.log("🚀 ~ WebSocketService ~ connect ~ username:", username);
           // Parse the values array which contains type and value pairs
           const values = JSON.parse(data.values);
 

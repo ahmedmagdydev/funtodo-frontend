@@ -101,4 +101,17 @@ export const authService = {
     console.log("🚀 ~ isAuthenticated ~ getToken():", getToken());
     return !!getToken();
   },
+
+  async verifyEmail(token: string): Promise<ApiResponse> {
+    try {
+      const response = await axios.post(`${API_URL}/auth/verify`, { token });
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Email verification failed",
+      };
+    }
+  },
 };
