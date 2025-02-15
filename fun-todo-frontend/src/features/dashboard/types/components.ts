@@ -17,6 +17,11 @@ export interface SensorTableProps {
   client: ClientData;
 }
 
+export interface CombinedSensorTableProps {
+  /** Array of client data containing sensor information */
+  clients: ClientData[];
+}
+
 export interface ViewControlsProps {
   /** The current view mode */
   viewMode: ViewMode;

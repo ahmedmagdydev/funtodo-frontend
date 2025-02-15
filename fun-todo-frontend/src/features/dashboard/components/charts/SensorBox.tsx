@@ -16,6 +16,7 @@ export const SensorBox: React.FC<SensorBoxProps> = ({ sensorId, value }) => {
         bgcolor: (SENSOR_COLORS as any)[sensorId] || "#757575",
         color: "white",
         borderRadius: 2,
+
       }}
     >
       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>

@@ -2,31 +2,16 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
-  Paper,
-  Typography,
   Grid,
-  Select,
-  MenuItem,
-  FormControl,
-  Stack,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
-import GridLayout from "react-grid-layout";
-import "react-grid-layout/css/styles.css";
-import "react-resizable/css/styles.css";
 import { GridViewRounded, BarChartRounded, TableChartRounded } from '@mui/icons-material';
-import { BarChart } from '@mui/x-charts/BarChart';
-import { DataGrid } from '@mui/x-data-grid';
 
 import WebSocketService from "../../../api/websocket";
 import { ClientData, SortOption, ViewMode } from "../types/dashboard";
- 
-const SENSOR_COLORS = {
-  temperature: "#ff9800",
-  humidity: "#2196f3",
-  pressure: "#4caf50",
-};
+import { CombinedSensorTable } from "./charts/CombinedSensorTable";
+import { ClientBox } from "./ClientBox";
 
 const SORT_OPTIONS_KEY = 'dashboard_sort_options';
 
@@ -48,106 +33,46 @@ export const Dashboard: React.FC = () => {
     webSocketRef.current = WebSocketService.getInstance();
     
     const handleSensorData = (data: ClientData[]) => {
-      setClientSensors(prevData => {
-        // Update existing data while preserving structure
-        const updatedData = data.map(newClient => {
-          const existingClient = prevData.find(c => c.clientId === newClient.clientId);
-          if (existingClient) {
-            // Merge new sensor data with existing data
-            return {
-              ...newClient,
-              sensors: newClient.sensors.map(sensor => {
-                const existingSensor = existingClient.sensors.find(s => s.sensorId === sensor.sensorId);
-                return {
-                  ...sensor,
-                  value: sensor.value // Use new value
-                };
-              })
-            };
-          }
-          return newClient;
-        });
-        return updatedData;
-      });
-
-      // Initialize sort options for new clients without affecting existing ones
-      setClientSortOptions(prev => {
-        const newSortOptions = { ...prev };
-        let hasChanges = false;
-        
-        data.forEach(client => {
-          if (!newSortOptions[client.clientId]) {
-            newSortOptions[client.clientId] = 'name';
-            hasChanges = true;
-          }
-        });
-        
-        if (hasChanges) {
-          localStorage.setItem(SORT_OPTIONS_KEY, JSON.stringify(newSortOptions));
-        }
-        return newSortOptions;
-      });
+      setClientSensors(data);
     };
 
     const unsubscribe = webSocketRef.current.subscribe(handleSensorData);
     
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      unsubscribe();
+      webSocketRef.current?.disconnect();
     };
-  }, []); // Only run on mount/unmount
+  }, []);
 
-  // Initialize ResizeObserver once
   useEffect(() => {
+    // Save sort options to localStorage when they change
+    localStorage.setItem(SORT_OPTIONS_KEY, JSON.stringify(clientSortOptions));
+  }, [clientSortOptions]);
+
+  useEffect(() => {
+    // Set up ResizeObserver
     resizeObserver.current = new ResizeObserver((entries) => {
       const newWidths: { [key: string]: number } = {};
+      
       entries.forEach((entry) => {
-        const clientId = entry.target.getAttribute('data-client-id');
+        const clientId = (entry.target as HTMLElement).dataset.clientId;
         if (clientId) {
           newWidths[clientId] = entry.contentRect.width;
         }
       });
-      setContainerWidths(prev => ({ ...prev, ...newWidths }));
+
+      setContainerWidths(prevWidths => {
+        const hasChanges = Object.entries(newWidths).some(
+          ([key, value]) => prevWidths[key] !== value
+        );
+        return hasChanges ? { ...prevWidths, ...newWidths } : prevWidths;
+      });
     });
 
     return () => {
-      if (resizeObserver.current) {
-        resizeObserver.current.disconnect();
-      }
+      resizeObserver.current?.disconnect();
     };
-  }, []); // Only create observer once
-
-  // Update observers when clients change or view mode changes
-  useEffect(() => {
-    if (resizeObserver.current && viewMode === 'grid') {
-      // Disconnect existing observations
-      resizeObserver.current.disconnect();
-      
-      // Observe all current container refs
-      Object.entries(containerRefs.current).forEach(([clientId, element]) => {
-        if (element) {
-          resizeObserver.current?.observe(element);
-          // Initial width measurement
-          setContainerWidths(prev => ({
-            ...prev,
-            [clientId]: element.offsetWidth
-          }));
-        }
-      });
-    }
-  }, [clientSensors, viewMode]);
-
-  const handleSortChange = (clientId: string, sortOption: SortOption) => {
-    setClientSortOptions(prev => {
-      const newOptions = {
-        ...prev,
-        [clientId]: sortOption
-      };
-      localStorage.setItem(SORT_OPTIONS_KEY, JSON.stringify(newOptions));
-      return newOptions;
-    });
-  };
+  }, []);
 
   const handleViewChange = (event: React.MouseEvent<HTMLElement>, newMode: ViewMode | null) => {
     if (newMode !== null) {
@@ -155,189 +80,11 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const renderSensorBox = (sensorId: string, value: number) => {
-    const displayValue = value != null ? value.toFixed(1) : 'N/A';
-    return (
-      <Paper
-        sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          bgcolor: (SENSOR_COLORS as any)[sensorId] || "#757575",
-          color: "white",
-          borderRadius: 2,
-        }}
-      >
-        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-          {sensorId}
-        </Typography>
-        <Typography variant="h6">
-          {displayValue}
-        </Typography>
-      </Paper>
-    );
-  };
-
-  const renderBarChart = (client: ClientData) => {
-    const data = client.sensors.map(sensor => ({
-      value: sensor.value,
-      sensor: sensor.sensorId,
+  const handleSortChange = (clientId: string, newSortOption: SortOption) => {
+    setClientSortOptions(prev => ({
+      ...prev,
+      [clientId]: newSortOption
     }));
-
-    return (
-      <Box sx={{ height: 300, mb: 2 }}>
-        <BarChart
-          dataset={data}
-          xAxis={[{ scaleType: 'band', dataKey: 'sensor' }]}
-          series={[{ dataKey: 'value', label: 'Value' }]}
-          height={280}
-        />
-      </Box>
-    );
-  };
-
-  const renderTableView = () => {
-    // Flatten all sensors from all clients into a single array
-    const rows = clientSensors.flatMap(client =>
-      client.sensors.map((sensor, index) => ({
-        id: `${client.clientId}-${sensor.sensorId}-${index}`,
-        clientId: client.clientId,
-        sensorId: sensor.sensorId,
-        value: sensor.value,
-      }))
-    );
-
-    const columns = [
-      { field: 'clientId', headerName: 'Client', width: 130 },
-      { field: 'sensorId', headerName: 'Sensor', width: 130 },
-      { 
-        field: 'value', 
-        headerName: 'Value', 
-        width: 130,
-        renderCell: (params: any) => {
-          return params.value != null ? params.value.toFixed(1) : 'N/A';
-        }
-      },
-    ];
-
-    return (
-      <Box sx={{ 
-        height: 'calc(100vh - 120px)', // Account for padding and controls
-        width: '100%',
-        mb: 2,
-        '& .MuiDataGrid-root': {
-          backgroundColor: 'white',
-          borderRadius: 2,
-        }
-      }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          disableRowSelectionOnClick
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 25 },
-            },
-          }}
-          pageSizeOptions={[10, 25, 50, 100]}
-        />
-      </Box>
-    );
-  };
-
-  const renderClientBox = (client: ClientData) => {
-    const containerWidth = containerWidths[client.clientId] || 0;
-    const sortOption = clientSortOptions[client.clientId] || 'name';
-    
-    // Sort sensors based on the selected option
-    const sortedSensors = [...client.sensors].sort((a, b) => {
-      if (sortOption === 'name') {
-        return a.sensorId.localeCompare(b.sensorId);
-      }
-      return b.value - a.value;
-    });
-
-    // Calculate optimal number of columns based on container width
-    const optimalCols = Math.max(2, Math.floor((containerWidth - 32) / 120));
-    const margin = 10;
-
-    // Create layout for grid items
-    const layout = sortedSensors.map((sensor, index) => ({
-      i: `${client.clientId}-${sensor.sensorId}`,
-      x: index % optimalCols,
-      y: Math.floor(index / optimalCols),
-      w: 1,
-      h: 1,
-    }));
-
-    switch (viewMode) {
-      case 'bar':
-        return renderBarChart(client);
-      default:
-        return (
-          <Grid item xs={12} md={6} lg={6} key={client.clientId}>
-            <Paper 
-              elevation={2} 
-              sx={{ 
-                p: 3,
-                height: '100%',
-                bgcolor: 'white',
-                borderRadius: 2,
-              }}
-            >
-              <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                  {client.clientId}
-                </Typography>
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <Select
-                    value={sortOption}
-                    onChange={(e) => handleSortChange(client.clientId, e.target.value as SortOption)}
-                    variant="outlined"
-                  >
-                    <MenuItem value="name">Sort by Name</MenuItem>
-                    <MenuItem value="value">Sort by Value</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
-              <Box 
-                ref={(el) => {
-                  containerRefs.current[client.clientId] = el;
-                }}
-                data-client-id={client.clientId}
-                sx={{ 
-                  bgcolor: 'grey.100', 
-                  p: 2, 
-                  borderRadius: 1,
-                  minHeight: '120px'
-                }}
-              >
-                {containerWidth > 0 && (
-                  <GridLayout
-                    className="layout"
-                    layout={layout}
-                    cols={optimalCols}
-                    rowHeight={80}
-                    width={containerWidth - 32}
-                    isDraggable={true}
-                    isResizable={false}
-                    margin={[margin, margin]}
-                    containerPadding={[0, 0]}
-                  >
-                    {sortedSensors.map((sensor) => (
-                      <div key={`${client.clientId}-${sensor.sensorId}`}>
-                        {renderSensorBox(sensor.sensorId, sensor.value)}
-                      </div>
-                    ))}
-                  </GridLayout>
-                )}
-              </Box>
-            </Paper>
-          </Grid>
-        );
-    }
   };
 
   const renderViewControls = () => (
@@ -362,6 +109,7 @@ export const Dashboard: React.FC = () => {
     </Box>
   );
 
+
   return (
     <Box sx={{ 
       p: 3,
@@ -371,10 +119,40 @@ export const Dashboard: React.FC = () => {
     }}>
       {renderViewControls()}
       {viewMode === 'table' ? (
-        renderTableView()
+        <CombinedSensorTable clients={clientSensors} />
+      ) : viewMode === 'bar' ? (
+        <Grid container spacing={3}>
+          {clientSensors.map((client) => (
+            <Grid item xs={12} md={6} lg={6} key={client.clientId}>
+              <ClientBox
+                client={client}
+                containerWidth={containerWidths[client.clientId] || 0}
+                sortOption={clientSortOptions[client.clientId] || 'name'}
+                viewMode="bar"
+                onSortChange={handleSortChange}
+                containerRef={(el) => {
+                  containerRefs.current[client.clientId] = el;
+                }}
+              />
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <Grid container spacing={3}>
-          {clientSensors.map((client) => renderClientBox(client))}
+          {clientSensors.map((client) => (
+            <Grid item xs={12} md={6} lg={6} key={client.clientId}>
+              <ClientBox
+                client={client}
+                containerWidth={containerWidths[client.clientId] || 0}
+                sortOption={clientSortOptions[client.clientId] || 'name'}
+                viewMode="grid"
+                onSortChange={handleSortChange}
+                containerRef={(el) => {
+                  containerRefs.current[client.clientId] = el;
+                }}
+              />
+            </Grid>
+          ))}
         </Grid>
       )}
     </Box>

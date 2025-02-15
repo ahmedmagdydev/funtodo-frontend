@@ -71,7 +71,6 @@ export const authService = {
     req: any,
     rememberMe: boolean = false
   ): Promise<ApiResponse> {
-    console.log("🚀 ~ req:", req);
     try {
       const response = await axios.post(`${API_URL}/auth/google`, {
         access_token: req,

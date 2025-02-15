@@ -47,12 +47,9 @@ class WebSocketService {
     this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("🚀 ~ WebSocketService ~ connect ~ data:", data);
         // Parse the type which contains username/clientId/sensorId
         if (data.type) {
           const [username, clientId, sensorId] = data.type.split("/");
-          console.log("🚀 ~ WebSocketService ~ connect ~ username:", username);
-
           // Parse the message which contains the value
           const messageData = JSON.parse(data.message);
 
@@ -89,31 +86,39 @@ class WebSocketService {
     const { clientId, sensorId, value } = data;
     const fullClientId = `${clientId}`;
 
-    const clientIndex = this.clientSensors.findIndex(
+    // Create a new array to ensure state updates are detected
+    const updatedClientSensors = [...this.clientSensors];
+    const clientIndex = updatedClientSensors.findIndex(
       (client) => client.clientId === fullClientId
     );
 
     if (clientIndex === -1) {
       // Add new client with sensor
-      this.clientSensors.push({
+      updatedClientSensors.push({
         clientId: fullClientId,
         sensors: [{ sensorId, value }],
       });
     } else {
       // Update existing client's sensor
-      const client = this.clientSensors[clientIndex];
+      const client = { ...updatedClientSensors[clientIndex] }; // Create a new client object
       const sensorIndex = client.sensors.findIndex(
         (sensor) => sensor.sensorId === sensorId
       );
 
       if (sensorIndex === -1) {
         // Add new sensor to existing client
-        client.sensors.push({ sensorId, value });
+        client.sensors = [...client.sensors, { sensorId, value }];
       } else {
         // Update existing sensor
-        client.sensors[sensorIndex].value = value;
+        client.sensors = client.sensors.map(sensor =>
+          sensor.sensorId === sensorId ? { ...sensor, value } : sensor
+        );
       }
+      updatedClientSensors[clientIndex] = client;
     }
+
+    this.clientSensors = updatedClientSensors;
+    this.notifyListeners();
   }
 
   private notifyListeners() {
