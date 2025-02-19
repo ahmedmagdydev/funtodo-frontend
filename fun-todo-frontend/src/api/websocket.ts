@@ -53,7 +53,7 @@ class WebSocketService {
           console.log("🚀 ~ WebSocketService ~ connect ~ username:", username);
           // Parse the values array which contains type and value pairs
           const values = JSON.parse(
-            data.values.replace("power:1 error:0", "").replace(" ", ",")
+            data.values.replace("power:1 error:0 ", "").replace(" ", ",")
           );
 
           this.updateClientSensors({
