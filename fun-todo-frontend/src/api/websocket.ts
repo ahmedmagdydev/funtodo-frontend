@@ -52,11 +52,13 @@ class WebSocketService {
           const [username, clientId, sensorId] = data.topic.split("/");
           console.log("🚀 ~ WebSocketService ~ connect ~ username:", username);
           // Parse the values array which contains type and value pairs
-          const values = JSON.parse(
-            "{" +
-              data.values.replace("power:1 error:0 ", "").replace(/ /g, ",") +
-              "}"
-          );
+          const values = data.values
+            .split(" ")
+            .filter((pair) => !["power", "error"].includes(pair.split(":")[0]))
+            .map((pair) => {
+              const [type, value] = pair.split(":");
+              return { type, value: parseFloat(value) };
+            });
 
           this.updateClientSensors({
             clientId,
