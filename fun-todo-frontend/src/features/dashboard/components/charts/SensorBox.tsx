@@ -33,7 +33,9 @@ export const SensorBox: React.FC<SensorBoxProps> = ({ sensorId, values }) => {
                 {value.type}
               </Typography>
               <Typography variant="body2">
-                {value.value.toFixed(1)}
+                {typeof value.value === 'number' 
+                  ? value.value.toFixed(1)
+                  : value.value}
               </Typography>
             </Box>
           </Grid>

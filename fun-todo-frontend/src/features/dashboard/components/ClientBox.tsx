@@ -25,7 +25,12 @@ export const ClientBox: React.FC<ClientBoxProps> = ({
     // Sort by the first value of each sensor as default
     const aValue = a.values[0]?.value || 0;
     const bValue = b.values[0]?.value || 0;
-    return bValue - aValue;
+    
+    // Handle string values (with units) by extracting the numeric part
+    const aNum = typeof aValue === 'string' ? parseFloat(aValue) : aValue;
+    const bNum = typeof bValue === 'string' ? parseFloat(bValue) : bValue;
+    
+    return bNum - aNum;
   });
 
   // Create layout for grid items
