@@ -52,11 +52,26 @@ class WebSocketService {
           const [username, clientId, sensorId] = data.topic.split("/");
           console.log("🚀 ~ WebSocketService ~ connect ~ username:", username);
           // Parse the values array which contains type and value pairs
-          const values = data.values
-            .split(" ")
-            .filter((pair) => !["power", "error"].includes(pair.split(":")[0]))
+          const pairs = data.values.split(" ");
+          const tempUnit = pairs
+            .find((p) => p.startsWith("temperature_unit:"))
+            ?.split(":")[1];
+
+          const values = pairs
+            .filter(
+              (pair) =>
+                !["power", "error", "temperature_unit"].includes(
+                  pair.split(":")[0]
+                )
+            )
             .map((pair) => {
               const [type, value] = pair.split(":");
+              if (type === "temperature") {
+                return {
+                  type,
+                  value: `${parseFloat(value)}${tempUnit === "0" ? "c" : "f"}`,
+                };
+              }
               return { type, value: parseFloat(value) };
             });
 
@@ -88,7 +103,7 @@ class WebSocketService {
   private updateClientSensors(data: {
     clientId: string;
     sensorId: string;
-    values: { type: string; value: number }[];
+    values: { type: string; value: number | string }[];
   }) {
     const { clientId, sensorId, values } = data;
     const fullClientId = `${clientId}`;

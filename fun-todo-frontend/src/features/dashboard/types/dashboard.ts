@@ -8,7 +8,7 @@ export interface MqttMessage {
 
 export interface SensorValue {
   type: string;
-  value: number;
+  value: number | string;
 }
 
 export interface SensorData {
