@@ -21,7 +21,7 @@ class WebSocketService {
   }
 
   private connect() {
-    const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:3001";
+    const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || "ws://localhost:3001";
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
